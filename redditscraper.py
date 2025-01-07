@@ -13,8 +13,7 @@ class redditScraper:
         self.subreddit = subreddit
         self.limit = limit
         self.order = None
-        self.final_folder = "2025"
-        self.path = f"/Users/brettlill/Library/CloudStorage/OneDrive-Personal/Pictures/reddit/{self.subreddit}/{self.order}/{self.final_folder}/"
+        self.path = SAVE_DIRECTORY
         self.dfpath = f'dataframes/'
         self.reddit = praw.Reddit(client_id=CLIENT_ID,
                                   client_secret=CLIENT_SECRET,
