@@ -11,9 +11,7 @@ class redditScraper:
     def __init__(self, subreddit, limit):
 
         self.subreddit = subreddit
-        self.limit = limit
-        self.order = None
-        self.path = SAVE_DIRECTORY
+        self.path = None
         self.dfpath = f'dataframes/'
         self.reddit = praw.Reddit(client_id=CLIENT_ID,
                                   client_secret=CLIENT_SECRET,
@@ -21,6 +19,7 @@ class redditScraper:
                                   username=USERNAME,
                                   password=PASSWORD
     )
+    
 
     def download(self, image):
         print("downloading image...", image['title'])
@@ -32,8 +31,9 @@ class redditScraper:
 
     def export_dataframe(self, images):
         print("Exporting dataframe...")
+        filename = f"{self.dfpath}{datetime.datetime.now().strftime('%Y%m%d%H%M%S')} {self.subreddit}.xlsx"
         df = pd.DataFrame(images).sort_values(by="score", ascending=False)
-        return df.to_excel(self.dfpath + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + " " + self.subreddit + " " + self.order + ".xlsx")
+        return df.to_excel(filename, index=False)
 
 
     def check_prohibited_chars(self, filename):
@@ -52,20 +52,21 @@ class redditScraper:
 
         images = []
         order_choices = ['new','hot','top']
+        filename_pattern = '(?s:.*)\w/(.*)'
+        image_types = ('jpg', 'jpeg', 'png', 'gif')
+        string_format = '%Y-%m-%dT%H:%M:%SZ'
 
         try:
+            
             for order_choice in order_choices:
-                self.order = order_choice
 
                 submissions = self.reddit.subreddit(self.subreddit).new()
                 self.path = f"{SAVE_DIR_BASE}/{self.subreddit}/{FINAL_FOLDER}/"
 
-                print(f"Download Path for {self.order}: {self.path}")
-
                 for submission in submissions:                    
-                    if submission.url.endswith(('jpg', 'jpeg', 'png', 'gif')):
+                    if submission.url.endswith(image_types):
                         submission.title = self.check_prohibited_chars(submission.title).strip()
-                        fname = self.path + submission.title + " " + re.search('(?s:.*)\w/(.*)', submission.url).group(1)
+                        fname = self.path + submission.title + " " + re.search(filename_pattern, submission.url).group(1)
                         if not os.path.isfile(fname):
                             dict_data = {
                                 'fname': fname.strip(),
@@ -76,7 +77,7 @@ class redditScraper:
                                 'downs': submission.downs,
                                 'score': submission.score,
                                 'id': submission.id,
-                                'created_utc': datetime.date.fromtimestamp(submission.created_utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                                'created_utc': datetime.date.fromtimestamp(submission.created_utc).strftime(string_format),
                                 'timestamp': submission.created_utc
                             }
                             images.append(dict_data)
@@ -87,7 +88,7 @@ class redditScraper:
                             for i in submission.media_metadata.items():
                                 url = i[1]['p'][0]['u'].split("?")[0].replace("preview", "i")
                                 submission.title = self.check_prohibited_chars(submission.title)
-                                fname = self.path + submission.title + " " + re.search('(?s:.*)\w/(.*)', url).group(1)
+                                fname = self.path + submission.title + " " + re.search(filename_pattern, url).group(1)
                                 if not os.path.isfile(fname):
                                     try:
                                         dict_data = {
@@ -99,21 +100,22 @@ class redditScraper:
                                             'downs': submission.downs,
                                             'score': submission.score,
                                             'id': submission.id,
-                                            'created_utc': datetime.date.fromtimestamp(submission.created_utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                                            'created_utc': datetime.date.fromtimestamp(submission.created_utc).strftime(string_format),
                                             'timestamp': submission.created_utc
                                         }
-                                        print(f"FOUND DATA: {dict_data['fname']}")
+                                        print(f"Found data: {dict_data['fname']}")
                                         images.append(dict_data)
                                     except Exception as e:
-                                        print(f"ERROR: {e}")
+                                        print(f"Error: {e}")
                         else:
-                            print("Metadata is NONE")
+                            print("Metadata is empty")
 
 
-                print(f'There are {len(images)} images in total...')
+                print(f'There are {len(images)} images in total.')
 
                 if len(images) > 0:
                     
+                    print("Exporting dataframe...")
                     self.export_dataframe(images)
                     
                     if order_choice == 'new':
@@ -122,9 +124,6 @@ class redditScraper:
                             os.makedirs(self.path)
                         with concurrent.futures.ThreadPoolExecutor() as ptolemy:
                             ptolemy.map(self.download, images)
-
-
-
 
         except Exception as e:
             print(e)
