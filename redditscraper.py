@@ -57,26 +57,12 @@ class redditScraper:
             for order_choice in order_choices:
                 self.order = order_choice
 
-                if self.order == 'hot':
-                    submissions = self.reddit.subreddit(self.subreddit).hot(limit=self.limit)
-                    self.path = f"/Users/brettlill/Library/CloudStorage/OneDrive-Personal/Pictures/reddit/{self.subreddit}/{self.order}/{self.final_folder}/"
-
-                elif self.order == 'top':
-                    #submissions = self.reddit.subreddit(self.subreddit).top(limit=self.limit)
-                    submissions = self.reddit.subreddit(self.subreddit).top(time_filter="all")
-
-                    self.path = f"/Users/brettlill/Library/CloudStorage/OneDrive-Personal/Pictures/reddit/{self.subreddit}/{self.order}/"
-
-                elif self.order == 'new':
-                    #submissions = self.reddit.subreddit(self.subreddit).new(limit=self.limit)
-                    submissions = self.reddit.subreddit(self.subreddit).new()
-                    self.path = f"/Users/brettlill/Library/CloudStorage/OneDrive-Personal/Pictures/reddit/{self.subreddit}/{self.order}/{self.final_folder}/"
+                submissions = self.reddit.subreddit(self.subreddit).new()
+                self.path = f"{SAVE_DIR_BASE}/{self.subreddit}/{FINAL_FOLDER}/"
 
                 print(f"Download Path for {self.order}: {self.path}")
 
-                for submission in submissions:
-                    print(submission.url)
-                    
+                for submission in submissions:                    
                     if submission.url.endswith(('jpg', 'jpeg', 'png', 'gif')):
                         submission.title = self.check_prohibited_chars(submission.title).strip()
                         fname = self.path + submission.title + " " + re.search('(?s:.*)\w/(.*)', submission.url).group(1)
