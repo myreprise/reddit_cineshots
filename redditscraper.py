@@ -12,6 +12,7 @@ class redditscraper:
 
         self.subreddit = subreddit
         self.path = None
+        self.order_choice= None
         self.dfpath = f'dataframes/'
         self.reddit = praw.Reddit(client_id=CLIENT_ID,
                                   client_secret=CLIENT_SECRET,
@@ -31,7 +32,7 @@ class redditscraper:
 
     def export_dataframe(self, images):
         print("Exporting dataframe...")
-        filename = f"{self.dfpath}{datetime.datetime.now().strftime('%Y%m%d%H%M%S')} {self.subreddit}.xlsx"
+        filename = f"{self.dfpath}{datetime.datetime.now().strftime('%Y%m%d%H%M%S')} {self.order_choice} {self.subreddit}.xlsx"
         df = pd.DataFrame(images).sort_values(by="score", ascending=False)
         return df.to_excel(filename, index=False)
 
@@ -59,9 +60,15 @@ class redditscraper:
         try:
             
             for order_choice in order_choices:
-
-                submissions = self.reddit.subreddit(self.subreddit).new()
-                self.path = f"{SAVE_DIR_BASE}/{self.subreddit}/{FINAL_FOLDER}/"
+                # establish order choice
+                self.order_choice = order_choice
+                if order_choice == 'new':
+                    submissions = self.reddit.subreddit(self.subreddit).new()
+                    self.path = f"{SAVE_DIR_BASE}/{self.subreddit}/{order_choice}/{FINAL_FOLDER}/"
+                elif order_choice == 'hot':
+                    submissions = self.reddit.subreddit(self.subreddit).hot()
+                else:
+                    submissions = self.reddit.subreddit(self.subreddit).top()                    
 
                 for submission in submissions:                    
                     if submission.url.endswith(image_types):
