@@ -7,7 +7,7 @@ import pandas as pd
 import concurrent.futures
 from config import *
 
-class redditScraper:
+class redditscraper:
     def __init__(self, subreddit, limit):
 
         self.subreddit = subreddit
@@ -37,7 +37,7 @@ class redditScraper:
 
 
     def check_prohibited_chars(self, filename):
-        prohibited_chars = '??:\/!|<>?*_?,"'
+        prohibited_chars = r'??:\/!|<>?*_?,"'
         if any(char in prohibited_chars for char in filename):
             new_filename = ''.join(char for char in filename if char not in prohibited_chars)
             print(f"Renamed '{filename}' to '{new_filename}'.")
@@ -52,7 +52,7 @@ class redditScraper:
 
         images = []
         order_choices = ['new','hot','top']
-        filename_pattern = '(?s:.*)\w/(.*)'
+        filename_pattern = r'(?s:.*)\w/(.*)'
         image_types = ('jpg', 'jpeg', 'png', 'gif')
         string_format = '%Y-%m-%dT%H:%M:%SZ'
 
